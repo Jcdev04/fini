@@ -1,0 +1,25 @@
+{
+  "name": "Fini - Finanzas Personales",
+  "short_name": "Fini",
+  "description": "Registra tus gastos e ingresos de forma rápida y sencilla",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#cfd73f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/fini-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/fini-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"]
+}
