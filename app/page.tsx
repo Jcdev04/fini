@@ -2,14 +2,24 @@
 
 import { useState } from "react";
 
-const CATEGORIAS = [
-  { id: "comida", label: "🍔 Comida", color: "#ff8c42" },
-  { id: "transporte", label: "🚗 Transporte", color: "#4a90e2" },
-  { id: "casa", label: "🏠 Casa", color: "#50c878" },
-  { id: "entretenimiento", label: "🎮 Entretenimiento", color: "#9b8dd8" },
-  { id: "salud", label: "💊 Salud", color: "#e74c3c" },
-  { id: "otros", label: "📦 Otros", color: "#95a5a6" },
-];
+const CATEGORIAS = {
+  gasto: [
+    { id: "comida", label: "🍔 Comida", color: "#ff8c42" },
+    { id: "transporte", label: "🚗 Transporte", color: "#4a90e2" },
+    { id: "educacion", label: "📚 Educación", color: "#f1c40f" },
+    { id: "herramientas", label: "💻 Herramientas", color: "#1abc9c" },
+    { id: "entretenimiento", label: "🎮 Entretenimiento", color: "#9b8dd8" },
+    { id: "salud", label: "💊 Salud", color: "#e74c3c" },
+    { id: "otros", label: "📦 Otros", color: "#95a5a6" },
+  ],
+  ingreso: [
+    { id: "freelance", label: "🚀 Freelance", color: "#2ecc71" },
+    { id: "business", label: "💼 Business", color: "#3498db" },
+    { id: "propinas", label: "💸 Propinas", color: "#f1c40f" },
+    { id: "alquiler", label: "🏠 Alquiler", color: "#e67e22" },
+    { id: "otros", label: "📦 Otros", color: "#95a5a6" },
+  ]
+};
 
 const MEDIOS_PAGO = [
   { value: "billetera digital", label: "💳 Billetera digital" },
@@ -19,12 +29,43 @@ const MEDIOS_PAGO = [
 
 export default function Home() {
   const [tipo, setTipo] = useState<"gasto" | "ingreso">("gasto");
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [fecha, setFecha] = useState(() => {
+    const ahora = new Date();
+    // Usamos Intl para obtener la fecha formateada en la zona horaria de Lima
+    const formatter = new Intl.DateTimeFormat('en-CA', { // 'en-CA' devuelve YYYY-MM-DD
+      timeZone: 'America/Lima',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    
+    return formatter.format(ahora); // Retorna "2026-02-03" (o la fecha actual)
+  });
   const [monto, setMonto] = useState("");
   const [categoria, setCategoria] = useState("");
   const [concepto, setConcepto] = useState("");
   const [medioPago, setMedioPago] = useState("billetera digital");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Función para mostrar la fecha de forma amigable al usuario (vista de usuario)
+  const getFechaLegible = (fechaStr: string) => {
+    if (!fechaStr) return "";
+    const [year, month, day] = fechaStr.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    // Formateador en español
+    const formatter = new Intl.DateTimeFormat('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    
+    let parts = formatter.format(date);
+    // Capitalizar primera letra (ej: Martes 3 de febrero)
+    parts = parts.charAt(0).toUpperCase() + parts.slice(1);
+    
+    return `${parts}, ${year}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +73,12 @@ export default function Home() {
 
     try {
       // Preparar los datos para enviar a Google Sheets
+      // Formatear fecha a DD-MM-YYYY (día-mes-año)
+      const [year, month, day] = fecha.split("-");
+      const fechaFormateada = `${day}-${month}-${year}`;
+
       const formData = {
-        fecha,
+        fecha: fechaFormateada,
         tipo,
         categoria,
         concepto: concepto || "-", // Si está vacío, enviar un guión
@@ -113,7 +158,10 @@ export default function Home() {
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => setTipo("gasto")}
+                    onClick={() => {
+                      setTipo("gasto");
+                      setCategoria(""); // Reset categoria al cambiar tipo
+                    }}
                     className={`flex-1 py-4 px-4 rounded-2xl font-semibold transition-all duration-300 border-2 ${
                       tipo === "gasto"
                         ? "border-[#e74c3c] text-[#e74c3c] bg-[#e74c3c]/10"
@@ -124,7 +172,10 @@ export default function Home() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTipo("ingreso")}
+                    onClick={() => {
+                      setTipo("ingreso");
+                      setCategoria(""); // Reset categoria al cambiar tipo
+                    }}
                     className={`flex-1 py-4 px-4 rounded-2xl font-semibold transition-all duration-300 border-2 ${
                       tipo === "ingreso"
                         ? "border-[#50c878] text-[#50c878] bg-[#50c878]/10"
@@ -170,7 +221,7 @@ export default function Home() {
                   Categoría *
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  {CATEGORIAS.map((cat) => (
+                  {CATEGORIAS[tipo].map((cat) => (
                     <button
                       key={cat.id}
                       type="button"
@@ -238,9 +289,14 @@ export default function Home() {
 
               {/* Fecha */}
               <div className="space-y-4">
-                <label htmlFor="fecha" className="text-sm font-medium text-white/60">
-                  Fecha
-                </label>
+                <div className="flex justify-between items-end">
+                  <label htmlFor="fecha" className="text-sm font-medium text-white/60">
+                    Fecha
+                  </label>
+                  <span className="text-xs font-medium text-[#cfd73f]">
+                    {getFechaLegible(fecha)}
+                  </span>
+                </div>
                 <input
                   id="fecha"
                   type="date"
